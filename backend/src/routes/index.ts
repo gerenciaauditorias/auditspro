@@ -16,9 +16,17 @@ router.get('/', (req, res) => {
 import authRoutes from './auth';
 import documentRoutes from './documents';
 import tenantRoutes from './tenant';
+import auditRoutes from './audits';
+import ncRoutes from './ncs';
+import kpiRoutes from './kpis';
+import riskRoutes from './risks';
 
 router.use('/auth', authRoutes);
 router.use('/documents', documentRoutes);
 router.use('/tenant', tenantRoutes);
+router.use('/audits', auditRoutes);
+router.use('/ncs', ncRoutes);
+router.use('/kpis', kpiRoutes);
+router.use('/risks', riskRoutes);
 
 export default router;

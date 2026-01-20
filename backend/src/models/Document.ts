@@ -44,11 +44,30 @@ export class Document {
     @Column({ length: 255 })
     storageKey: string;
 
-    @Column({ nullable: true })
-    description?: string;
+    @Column({ length: 50, nullable: true })
+    type: 'manual' | 'procedure' | 'instruction' | 'format' | 'record' | 'other';
 
-    @Column({ length: 50, default: 'pending' })
-    status: 'pending' | 'processed' | 'analyzed' | 'archived';
+    @Column({ length: 50, nullable: true, unique: true })
+    code: string;
+
+    @Column({ default: 1 })
+    version: number;
+
+    @Column({ type: 'text', nullable: true })
+    content: string;
+
+    @Column({ length: 50, default: 'draft' })
+    status: 'draft' | 'under_review' | 'approved' | 'obsolete';
+
+    @Column({ nullable: true })
+    approvedById: string;
+
+    @ManyToOne(() => User)
+    @JoinColumn({ name: 'approvedById' })
+    approvedBy: User;
+
+    @Column({ type: 'timestamp', nullable: true })
+    approvalDate: Date;
 
     @CreateDateColumn()
     createdAt: Date;

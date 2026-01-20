@@ -77,7 +77,8 @@ export const register = asyncHandler(async (
                 id: user.id,
                 email: user.email,
                 fullName: user.fullName,
-                role: user.role
+                role: user.role,
+                tenantId: user.tenantId
             },
             tenant: {
                 id: tenant.id,

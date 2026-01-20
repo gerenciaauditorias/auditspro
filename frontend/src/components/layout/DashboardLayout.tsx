@@ -1,6 +1,8 @@
 import React from 'react';
-import { LayoutDashboard, FileText, Settings, LogOut, Search, Bell } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, LogOut, Search, Bell, ShieldAlert } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+
+import { useAuth } from '../../features/auth/hooks/useAuth';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -18,6 +20,7 @@ const SidebarItem = ({ icon: Icon, label, to, active }: { icon: any, label: stri
 
 export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
+    const { user } = useAuth();
 
     return (
         <div className="flex h-screen bg-gray-50">
@@ -26,10 +29,13 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="p-6">
                     <Link to="/dashboard" className="text-xl font-bold text-primary-600">Auditorías <span className="text-gray-900">Online</span></Link>
                 </div>
-
-                <nav className="flex-1 px-4 space-y-2">
+                <nav className="flex-1 px-4 space-y-1 overflow-y-auto pt-2 pb-4">
                     <SidebarItem icon={LayoutDashboard} label="Dashboard" to="/dashboard" active={location.pathname === '/dashboard'} />
                     <SidebarItem icon={FileText} label="Documentos" to="/documents" active={location.pathname === '/documents'} />
+                    <SidebarItem icon={FileText} label="Auditorías" to="/audits" active={location.pathname === '/audits'} />
+                    <SidebarItem icon={FileText} label="No Conformidades" to="/ncs" active={location.pathname === '/ncs'} />
+                    <SidebarItem icon={ShieldAlert} label="Gestión de Riesgos" to="/risks" active={location.pathname === '/risks'} />
+                    <SidebarItem icon={FileText} label="Indicadores / KPIs" to="/kpis" active={location.pathname === '/kpis'} />
                     <SidebarItem icon={Settings} label="Configuración" to="/settings" active={location.pathname === '/settings'} />
                 </nav>
 
@@ -57,12 +63,12 @@ export const DashboardLayout: React.FC<LayoutProps> = ({ children }) => {
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
                         <div className="flex items-center space-x-3 border-l border-gray-200 pl-4 transition-colors p-1 rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
-                                M
+                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold uppercase">
+                                {user?.fullName?.charAt(0) || 'U'}
                             </div>
                             <div className="hidden md:block text-left">
-                                <p className="text-sm font-medium text-gray-900">Matias Kiriar</p>
-                                <p className="text-xs text-gray-500">Administrador</p>
+                                <p className="text-sm font-medium text-gray-900">{user?.fullName || 'Usuario'}</p>
+                                <p className="text-xs text-gray-500 capitalize">{user?.role || 'Miembro'}</p>
                             </div>
                         </div>
                     </div>

@@ -7,6 +7,10 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OnboardingWizard from './pages/OnboardingWizard';
+import Audits from './pages/Audits';
+import NonConformities from './pages/NonConformities';
+import KPIs from './pages/KPIs';
+import Risks from './pages/Risks';
 
 function App() {
     return (
@@ -53,7 +57,31 @@ function App() {
                         path="/audits"
                         element={
                             <ProtectedRoute>
-                                <Documents />
+                                <Audits />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/ncs"
+                        element={
+                            <ProtectedRoute>
+                                <NonConformities />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/kpis"
+                        element={
+                            <ProtectedRoute>
+                                <KPIs />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/risks"
+                        element={
+                            <ProtectedRoute>
+                                <Risks />
                             </ProtectedRoute>
                         }
                     />
