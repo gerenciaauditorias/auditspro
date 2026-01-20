@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Logout from './pages/Logout';
 import Register from './pages/Register';
 import OnboardingWizard from './pages/OnboardingWizard';
 import Audits from './pages/Audits';
@@ -19,6 +20,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/logout" element={<Logout />} />
                     <Route path="/register" element={<Register />} />
                     <Route
                         path="/onboarding"
