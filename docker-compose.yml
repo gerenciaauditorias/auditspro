@@ -46,6 +46,7 @@ services:
       MINIO_PORT: 9000
     volumes:
       - ./backend:/app
+      - /app/node_modules
     depends_on:
       - postgres
       - redis
@@ -62,6 +63,7 @@ services:
       - '5173:5173'
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     environment:
       VITE_API_URL: http://localhost:5000/api
     command: npm run dev
