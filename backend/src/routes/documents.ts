@@ -17,6 +17,12 @@ import {
     revokePermission,
     getDocumentMatrix
 } from '../controllers/documentAdvancedController';
+import {
+    addComment,
+    getComments,
+    updateComment,
+    deleteComment
+} from '../controllers/documentCommentController';
 import { authenticate, ensureTenantIsolation } from '../middlewares/auth';
 
 const router = Router();
@@ -47,5 +53,11 @@ router.get('/:id/versions', getDocumentVersions);
 router.get('/:id/permissions', getDocumentPermissions);
 router.post('/:id/permissions', grantPermission);
 router.delete('/:id/permissions/:permissionId', revokePermission);
+
+// Comments
+router.get('/:id/comments', getComments);
+router.post('/:id/comments', addComment);
+router.put('/:id/comments/:commentId', updateComment);
+router.delete('/:id/comments/:commentId', deleteComment);
 
 export default router;

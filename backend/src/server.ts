@@ -7,6 +7,7 @@ import { initializeDatabase } from './config/database';
 import routes from './routes';
 import { errorHandler } from './middlewares/errorHandler';
 import { rateLimiter } from './middlewares/rateLimiter';
+import { DocumentReminderService } from './services/documentReminderService';
 
 dotenv.config();
 
@@ -34,9 +35,13 @@ const startServer = async () => {
     try {
         await initializeDatabase();
 
+        // Start scheduled jobs for document reminders
+        DocumentReminderService.startScheduledJobs();
+
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+            console.log(`⏰ Document reminder jobs scheduled`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);

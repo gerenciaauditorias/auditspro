@@ -32,11 +32,13 @@ interface Document {
 }
 
 const Documents: React.FC = () => {
+    const navigate = useNavigate();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
