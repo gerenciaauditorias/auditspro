@@ -5,14 +5,13 @@ import { OrganizationSettings } from '../features/settings/components/Organizati
 import { UserManagement } from '../features/settings/components/UserManagement';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
-type TabType = 'organization' | 'users' | 'security';
+import { usePermissions } from '../hooks/usePermissions';
+
+type TabType = 'organization' | 'users' | 'security' | 'admin';
 
 const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('organization');
-    const { user } = useAuth();
-
-    // Check if user is tenant_admin or super_admin
-    const isAdmin = user?.role === 'tenant_admin' || user?.role === 'super_admin';
+    const { isAdmin, isTenantAdmin, isSuperAdmin } = usePermissions();
 
     if (!isAdmin) {
         return (
