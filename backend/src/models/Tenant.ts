@@ -46,6 +46,19 @@ export class Tenant {
     @Column({ type: 'int', nullable: true })
     employeesCount?: number;
 
+    // Fiscal Information (Argentina)
+    @Column({ length: 13, nullable: true })
+    cuit?: string;
+
+    @Column({ length: 50, nullable: true })
+    taxCondition?: 'responsable_inscripto' | 'monotributo' | 'exento' | 'consumidor_final';
+
+    @Column({ type: 'text', nullable: true })
+    billingAddress?: string;
+
+    @Column({ length: 50, nullable: true })
+    ivaCondition?: 'responsable_inscripto' | 'exento' | 'no_responsable';
+
     @OneToMany(() => User, user => user.tenant)
     users: User[];
 

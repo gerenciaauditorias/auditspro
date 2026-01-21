@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { updateOnboarding, getTenantInfo } from '../controllers/tenantController';
-import { authenticate } from '../middlewares/auth';
+import { getTenantInfo, updateTenant } from '../controllers/tenantController';
+import { authenticate, ensureTenantIsolation } from '../middlewares/auth';
+import { requireTenantAdmin } from '../middlewares/rbac';
 
 const router = Router();
 
-// All tenant routes require authentication
 router.use(authenticate);
+router.use(ensureTenantIsolation);
 
-router.post('/onboarding', updateOnboarding);
-router.get('/info', getTenantInfo);
+router.get('/', getTenantInfo);
+router.patch('/', requireTenantAdmin, updateTenant);
 
 export default router;

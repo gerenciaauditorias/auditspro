@@ -16,13 +16,110 @@ export const getUsers = asyncHandler(async (
 
     const users = await userRepo.find({
         where: { tenantId },
-        select: ['id', 'email', 'fullName', 'role', 'isActive']
+        select: ['id', 'email', 'fullName', 'role', 'isActive', 'emailVerified', 'createdAt', 'lastLogin']
     });
 
     res.json({
         status: 'success',
         results: users.length,
         data: { users }
+    });
+});
+
+export const createUser = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { email, fullName, role, password } = req.body;
+    const tenantId = (req as any).user.tenantId;
+
+    if (!email || !fullName || !role) {
+        throw new AppError('Email, fullName, and role are required', 400);
+    }
+
+    const userRepo = AppDataSource.getRepository(User);
+    const existingUser = await userRepo.findOne({ where: { email } });
+
+    if (existingUser) {
+        throw new AppError('User with this email already exists', 400);
+    }
+
+    const user = userRepo.create({
+        email,
+        fullName,
+        role,
+        tenantId,
+        passwordHash: password ? await User.hashPassword(password) : await User.hashPassword(`temp_${Date.now()}`),
+        isActive: true,
+        emailVerified: false
+    });
+
+    await userRepo.save(user);
+
+    res.status(201).json({
+        status: 'success',
+        data: {
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role
+            }
+        }
+    });
+});
+
+export const updateUser = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { id } = req.params;
+    const { fullName, role, isActive } = req.body;
+    const tenantId = (req as any).user.tenantId;
+
+    const userRepo = AppDataSource.getRepository(User);
+    const user = await userRepo.findOne({ where: { id, tenantId } });
+
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    if (fullName) user.fullName = fullName;
+    if (role) user.role = role;
+    if (typeof isActive === 'boolean') user.isActive = isActive;
+
+    await userRepo.save(user);
+
+    res.json({
+        status: 'success',
+        data: { user }
+    });
+});
+
+export const deleteUser = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { id } = req.params;
+    const tenantId = (req as any).user.tenantId;
+
+    const userRepo = AppDataSource.getRepository(User);
+    const user = await userRepo.findOne({ where: { id, tenantId } });
+
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    // Soft delete - set isActive to false
+    user.isActive = false;
+    await userRepo.save(user);
+
+    res.json({
+        status: 'success',
+        message: 'User deactivated successfully'
     });
 });
 
@@ -53,31 +150,24 @@ export const inviteUser = asyncHandler(async (
     const tenant = await tenantRepo.findOneBy({ id: tenantId });
     if (!tenant) throw new AppError('Tenant not found', 404);
 
-    // Create user with temp password and unverified email
-    // We set isActive to true so they can try to login/reset password, 
-    // but typically we might want false until they accept. 
-    // Plan said isActive: true.
     const user = userRepo.create({
         email,
         role,
         tenantId,
         fullName: 'Pending Invite',
-        passwordHash: await User.hashPassword(`invite_${Date.now()}`), // Temp random password
-        isActive: true, // As per plan
+        passwordHash: await User.hashPassword(`invite_${Date.now()}`),
+        isActive: true,
         emailVerified: false
     });
 
     await userRepo.save(user);
 
-    // Generate invite token
-    // We can use a specific secret or the general JWT_SECRET
     const inviteToken = jwt.sign(
         { userId: user.id, type: 'invite' },
         process.env.JWT_SECRET || 'default_secret',
         { expiresIn: '7d' }
     );
 
-    // Send email
     await sendInvitationEmail(email, inviteToken, tenant.companyName);
 
     res.status(201).json({
