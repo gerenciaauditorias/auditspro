@@ -65,6 +65,23 @@ export class Tenant {
     @Column({ length: 50, nullable: true })
     ivaCondition?: 'responsable_inscripto' | 'exento' | 'no_responsable';
 
+    // Subscription & Payment Info
+    @Column({ type: 'timestamp', nullable: true })
+    trialStartDate?: Date;
+
+    @Column({ type: 'timestamp', nullable: true })
+    trialEndsAt?: Date;
+
+    @Column({ type: 'timestamp', nullable: true })
+    billingStartDate?: Date;
+
+    @Column({ type: 'varchar', length: 50, default: 'trial_active' })
+    subscriptionStatus: 'trial_active' | 'trial_ending' | 'trial_ended_pending' | 'active' | 'suspended' | 'cancelled';
+
+    @Column({ type: 'text', nullable: true, select: false }) // Don't expose this by default
+    paymentMethodToken?: string;
+
+
     @OneToMany(() => User, user => user.tenant, { cascade: true, onDelete: 'CASCADE' })
     users: User[];
 

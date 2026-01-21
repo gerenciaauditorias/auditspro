@@ -12,6 +12,7 @@
     "migration:generate": "typeorm migration:generate",
     "migration:run": "typeorm migration:run",
     "seed:superadmin": "ts-node src/scripts/createSuperAdmin.ts",
+    "check-trials": "ts-node src/scripts/checkTrialExpiration.ts",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"
   },
