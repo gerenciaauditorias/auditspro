@@ -11,10 +11,10 @@ const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('organization');
     const { user } = useAuth();
 
-    // Check if user is tenant_admin
-    const isTenantAdmin = user?.role === 'tenant_admin';
+    // Check if user is tenant_admin or super_admin
+    const isAdmin = user?.role === 'tenant_admin' || user?.role === 'super_admin';
 
-    if (!isTenantAdmin) {
+    if (!isAdmin) {
         return (
             <DashboardLayout>
                 <div className="max-w-7xl mx-auto">

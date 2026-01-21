@@ -12,6 +12,11 @@ export const requireRole = (allowedRoles: string[]) => {
             throw new AppError('Authentication required', 401);
         }
 
+        // Super admin has access to everything
+        if (user.role === 'super_admin') {
+            return next();
+        }
+
         if (!allowedRoles.includes(user.role)) {
             throw new AppError('Insufficient permissions', 403);
         }
@@ -21,9 +26,9 @@ export const requireRole = (allowedRoles: string[]) => {
 };
 
 /**
- * Shorthand middleware for tenant_admin only
+ * Shorthand middleware for tenant_admin or super_admin
  */
-export const requireTenantAdmin = requireRole(['tenant_admin']);
+export const requireTenantAdmin = requireRole(['tenant_admin', 'super_admin']);
 
 /**
  * Middleware for tenant_admin or super_admin
