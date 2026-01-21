@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "migration:generate": "typeorm migration:generate",
     "migration:run": "typeorm migration:run",
+    "seed:superadmin": "ts-node src/scripts/createSuperAdmin.ts",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"
   },
