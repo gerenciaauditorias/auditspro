@@ -64,9 +64,8 @@ services:
     image: ghcr.io/gerenciaauditorias/auditspro-frontend:latest
     container_name: auditorias_frontend
     ports:
-      - '5173:80'
+      - '5173:5173'
     environment:
-      # Nginx serves static files, no env vars needed
       VITE_API_URL: http://localhost:5000/api
 
 volumes:
