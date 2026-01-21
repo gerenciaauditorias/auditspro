@@ -5,6 +5,7 @@ import { Tenant } from '../models/Tenant';
 import { AppError, asyncHandler } from '../middlewares/errorHandler';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
 import { sendVerificationEmail } from '../services/emailService';
+import jwt from 'jsonwebtoken';
 
 export const register = asyncHandler(async (
     req: Request,
@@ -124,6 +125,77 @@ export const login = asyncHandler(async (
     await userRepo.save(user);
 
     // Generar tokens
+    const accessToken = generateAccessToken({
+        userId: user.id,
+        tenantId: user.tenantId,
+        email: user.email,
+        role: user.role
+    });
+
+    const refreshToken = generateRefreshToken({
+        userId: user.id,
+        tenantId: user.tenantId,
+        email: user.email,
+        role: user.role
+    });
+
+    res.json({
+        status: 'success',
+        data: {
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+                tenantId: user.tenantId
+            },
+            accessToken,
+            refreshToken
+        }
+    });
+});
+
+export const acceptInvite = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { token, fullName, password } = req.body;
+
+    if (!token || !fullName || !password) {
+        throw new AppError('All fields are required', 400);
+    }
+
+    let decoded: any;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    } catch (err) {
+        throw new AppError('Invalid or expired invitation token', 400);
+    }
+
+    if (decoded.type !== 'invite') {
+        throw new AppError('Invalid token type', 400);
+    }
+
+    const userRepo = AppDataSource.getRepository(User);
+    const user = await userRepo.findOne({ where: { id: decoded.userId } });
+
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    if (user.emailVerified) {
+        throw new AppError('User already verified', 400);
+    }
+
+    user.fullName = fullName;
+    user.passwordHash = await User.hashPassword(password);
+    user.emailVerified = true;
+    user.isActive = true;
+
+    await userRepo.save(user);
+
+    // Generate tokens
     const accessToken = generateAccessToken({
         userId: user.id,
         tenantId: user.tenantId,

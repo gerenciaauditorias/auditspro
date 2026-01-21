@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import {
     ClipboardCheck,
@@ -30,6 +31,7 @@ const Audits: React.FC = () => {
     const [audits, setAudits] = useState<Audit[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchAudits();
@@ -143,7 +145,10 @@ const Audits: React.FC = () => {
                                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusStyle(audit.status)}`}>
                                                 {getStatusLabel(audit.status)}
                                             </span>
-                                            <button className="text-gray-400 hover:text-gray-600 uppercase text-xs font-bold tracking-wider">
+                                            <button
+                                                onClick={() => navigate(`/audits/${audit.id}`)}
+                                                className="text-gray-400 hover:text-gray-600 uppercase text-xs font-bold tracking-wider"
+                                            >
                                                 Detalles
                                             </button>
                                         </div>
@@ -159,7 +164,7 @@ const Audits: React.FC = () => {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => generateAuditReport(audit)}
+                                            onClick={() => navigate(`/audits/${audit.id}`)}
                                             className="w-full flex items-center justify-center px-4 py-2 bg-gray-50 text-primary-700 font-bold rounded-lg hover:bg-primary-50 transition-colors border border-primary-100"
                                         >
                                             {audit.status === 'scheduled' ? 'Gestionar / Reporte' : 'Ver Informe'}
@@ -191,7 +196,12 @@ const Audits: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button className="text-primary-600 hover:text-primary-900">Gestionar</button>
+                                                <button
+                                                    onClick={() => navigate(`/audits/${audit.id}`)}
+                                                    className="text-primary-600 hover:text-primary-900"
+                                                >
+                                                    Gestionar
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

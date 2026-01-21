@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers } from '../controllers/userController';
+import { getUsers, inviteUser } from '../controllers/userController';
 import { authenticate } from '../middlewares/auth';
 
 const router = Router();
@@ -7,5 +7,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', getUsers);
+router.post('/invite', inviteUser);
 
 export default router;

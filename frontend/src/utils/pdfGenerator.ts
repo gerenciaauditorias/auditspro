@@ -48,14 +48,53 @@ export const generateAuditReport = (auditData: any) => {
     // Content Section
     const finalY = (doc as any).lastAutoTable.finalY + 15;
 
+    // Stats Calculation
+    const totalChecks = auditData.checklists?.length || 0;
+    const compliant = auditData.checklists?.filter((c: any) => c.isCompliant === true).length || 0;
+    const nonCompliant = auditData.checklists?.filter((c: any) => c.isCompliant === false).length || 0;
+    const progress = totalChecks > 0 ? Math.round(((compliant + nonCompliant) / totalChecks) * 100) : 0;
+    const complianceRate = (compliant + nonCompliant) > 0 ? Math.round((compliant / (compliant + nonCompliant)) * 100) : 0;
+
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Resumen Ejecutivo", 15, finalY);
+    doc.text("Resumen de Ejecución", 15, finalY);
 
+    // Stats Row
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    const summary = "Esta auditoría se realizó para verificar el cumplimiento de los procesos internos según la norma ISO 9001:2015. Se evaluaron los controles operativos y la documentación asociada.";
-    doc.text(doc.splitTextToSize(summary, pageWidth - 30), 15, finalY + 8);
+    doc.text(`Progreso de Auditoría: ${progress}%`, 15, finalY + 8);
+    doc.text(`Nivel de Cumplimiento: ${complianceRate}%`, 15, finalY + 14);
+    doc.text(`Cumple: ${compliant} | No Cumple: ${nonCompliant} | Total: ${totalChecks}`, 15, finalY + 20);
+
+    // Checklist Table
+    const checklistBody = auditData.checklists?.map((item: any) => [
+        item.section,
+        item.question,
+        item.isCompliant === true ? 'CUMPLE' : item.isCompliant === false ? 'NO CUMPLE' : 'PENDIENTE',
+        item.auditorNotes || '-'
+    ]) || [];
+
+    autoTable(doc, {
+        startY: finalY + 25,
+        head: [['Sec', 'Requisito / Pregunta', 'Estado', 'Notas']],
+        body: checklistBody,
+        theme: 'grid',
+        headStyles: { fillColor: [55, 65, 81], textColor: [255, 255, 255] },
+        styles: { fontSize: 9, cellPadding: 3 },
+        columnStyles: {
+            0: { cellWidth: 15 },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 25, fontStyle: 'bold' },
+            3: { cellWidth: 50 }
+        },
+        didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 2) {
+                const status = data.cell.raw;
+                if (status === 'CUMPLE') data.cell.styles.textColor = [22, 163, 74];
+                if (status === 'NO CUMPLE') data.cell.styles.textColor = [220, 38, 38];
+            }
+        }
+    });
 
     // Footer
     const pageCount = doc.internal.pages.length - 1;

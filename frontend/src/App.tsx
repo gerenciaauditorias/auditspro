@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import OnboardingWizard from './pages/OnboardingWizard';
 import Audits from './pages/Audits';
 import { AuditDetails } from './pages/AuditDetails';
+import AcceptInvite from './pages/AcceptInvite';
 import NonConformities from './pages/NonConformities';
 import KPIs from './pages/KPIs';
 import Risks from './pages/Risks';
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/accept-invite" element={<AcceptInvite />} />
                     <Route
                         path="/onboarding"
                         element={

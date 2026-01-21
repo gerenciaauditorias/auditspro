@@ -150,29 +150,65 @@ const OnboardingWizard: React.FC = () => {
 
             case 2:
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h4 className="font-medium text-blue-900 mb-2">Roles Predefinidos</h4>
-                            <p className="text-sm text-blue-700 mb-3">
-                                Tu cuenta ya incluye los siguientes roles:
+                            <h4 className="font-medium text-blue-900 mb-2">Invitar Usuarios</h4>
+                            <p className="text-sm text-blue-700 mb-4">
+                                Invita a tus colaboradores a unirse a la organización.
                             </p>
-                            <ul className="space-y-2 text-sm text-blue-800">
-                                <li className="flex items-center">
-                                    <Check className="mr-2" size={16} />
-                                    <strong>Administrador:</strong> Control total del sistema
-                                </li>
-                                <li className="flex items-center">
-                                    <Check className="mr-2" size={16} />
-                                    <strong>Auditor:</strong> Realiza y gestiona auditorías
-                                </li>
-                                <li className="flex items-center">
-                                    <Check className="mr-2" size={16} />
-                                    <strong>Usuario:</strong> Acceso básico a documentos
-                                </li>
-                            </ul>
+
+                            <div className="bg-white p-4 rounded-md shadow-sm space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Email del Usuario
+                                    </label>
+                                    <input
+                                        type="email"
+                                        placeholder="ejemplo@empresa.com"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                                        id="invite-email"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Rol
+                                    </label>
+                                    <select
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                                        id="invite-role"
+                                        defaultValue="user"
+                                    >
+                                        <option value="tenant_admin">Administrador</option>
+                                        <option value="auditor">Auditor</option>
+                                        <option value="user">Usuario</option>
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        const emailInput = document.getElementById('invite-email') as HTMLInputElement;
+                                        const roleInput = document.getElementById('invite-role') as HTMLSelectElement;
+                                        const email = emailInput.value;
+                                        const role = roleInput.value;
+
+                                        if (!email) return toast.error('Ingresa un email');
+
+                                        try {
+                                            await apiClient.post('/users/invite', { email, role });
+                                            toast.success(`Invitación enviada a ${email}`);
+                                            emailInput.value = '';
+                                        } catch (err: any) {
+                                            toast.error(err.response?.data?.message || 'Error al enviar invitación');
+                                        }
+                                    }}
+                                    className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm flex items-center justify-center"
+                                >
+                                    <Users size={16} className="mr-2" />
+                                    Enviar Invitación
+                                </button>
+                            </div>
                         </div>
-                        <p className="text-sm text-gray-600">
-                            Podrás invitar usuarios y asignar roles desde el panel de configuración.
+                        <p className="text-sm text-gray-500 text-center">
+                            Puedes continuar y gestionar más usuarios desde el panel de configuración más tarde.
                         </p>
                     </div>
                 );
@@ -231,8 +267,8 @@ const OnboardingWizard: React.FC = () => {
                                 <div className="flex flex-col items-center flex-1">
                                     <div
                                         className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors ${currentStep >= step.id
-                                                ? 'bg-primary-600 text-white'
-                                                : 'bg-gray-200 text-gray-500'
+                                            ? 'bg-primary-600 text-white'
+                                            : 'bg-gray-200 text-gray-500'
                                             }`}
                                     >
                                         {currentStep > step.id ? (
