@@ -30,6 +30,20 @@ const Documents: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Form state
+    const [formData, setFormData] = useState({
+        title: '',
+        code: '',
+        type: 'procedure' as 'manual' | 'procedure' | 'instruction' | 'format' | 'record' | 'other',
+        content: ''
+    });
+
+    const [formErrors, setFormErrors] = useState({
+        title: '',
+        code: ''
+    });
 
     useEffect(() => {
         fetchDocuments();
@@ -46,6 +60,76 @@ const Documents: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const validateForm = () => {
+        const errors = { title: '', code: '' };
+        let isValid = true;
+
+        if (!formData.title.trim()) {
+            errors.title = 'El nombre es obligatorio';
+            isValid = false;
+        }
+
+        if (!formData.code.trim()) {
+            errors.code = 'El código es obligatorio';
+            isValid = false;
+        } else if (!/^[A-Z0-9-]+$/i.test(formData.code)) {
+            errors.code = 'El código solo puede contener letras, números y guiones';
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
+    const handleCreateDocument = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const response = await apiClient.post('/documents', formData);
+
+            if (response.data.status === 'success') {
+                toast.success('Documento creado exitosamente');
+                setIsCreateModalOpen(false);
+
+                // Reset form
+                setFormData({
+                    title: '',
+                    code: '',
+                    type: 'procedure',
+                    content: ''
+                });
+                setFormErrors({ title: '', code: '' });
+
+                // Refresh document list
+                fetchDocuments();
+            }
+        } catch (error: any) {
+            const message = error.response?.data?.message || 'Error al crear el documento';
+            toast.error(message);
+
+            // Handle specific validation errors
+            if (error.response?.status === 400 && message.includes('code')) {
+                setFormErrors(prev => ({ ...prev, code: message }));
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setIsCreateModalOpen(false);
+        setFormData({
+            title: '',
+            code: '',
+            type: 'procedure',
+            content: ''
+        });
+        setFormErrors({ title: '', code: '' });
     };
 
     const getStatusBadge = (status: string) => {
@@ -219,36 +303,100 @@ const Documents: React.FC = () => {
                 </div>
             </div>
 
-            {/* Simple Create Modal (Draft) */}
+            {/* Document Creation Modal */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                             <h3 className="text-xl font-bold text-gray-900">Nuevo Documento</h3>
-                            <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-600">×</button>
+                            <button
+                                onClick={handleCloseModal}
+                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                            >
+                                ×
+                            </button>
                         </div>
                         <div className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                                <input type="text" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Ej: Procedimiento de Compras" />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 ${formErrors.title ? 'border-red-500' : 'border-gray-300'
+                                        }`}
+                                    placeholder="Ej: Procedimiento de Compras"
+                                />
+                                {formErrors.title && (
+                                    <p className="mt-1 text-sm text-red-600">{formErrors.title}</p>
+                                )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
-                                <input type="text" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Ej: QMS-PR-01" />
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Código <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.code}
+                                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 font-mono ${formErrors.code ? 'border-red-500' : 'border-gray-300'
+                                        }`}
+                                    placeholder="Ej: QMS-PR-01"
+                                />
+                                {formErrors.code && (
+                                    <p className="mt-1 text-sm text-red-600">{formErrors.code}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                                <select className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                                <select
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                >
                                     <option value="procedure">Procedimiento</option>
                                     <option value="instruction">Instructivo</option>
                                     <option value="manual">Manual</option>
                                     <option value="format">Formato</option>
+                                    <option value="record">Registro</option>
+                                    <option value="other">Otro</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción (opcional)</label>
+                                <textarea
+                                    value={formData.content}
+                                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                    rows={3}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 resize-none"
+                                    placeholder="Breve descripción del documento..."
+                                />
                             </div>
                         </div>
                         <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
-                            <button onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Cancelar</button>
-                            <button className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium shadow-lg shadow-primary-200">Crear Documento</button>
+                            <button
+                                onClick={handleCloseModal}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                                disabled={isSubmitting}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleCreateDocument}
+                                disabled={isSubmitting}
+                                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium shadow-lg shadow-primary-200 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                                        Creando...
+                                    </>
+                                ) : (
+                                    'Crear Documento'
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

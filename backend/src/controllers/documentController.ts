@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../config/database';
 import { Document } from '../models/Document';
+import { DocumentVersion } from '../models/DocumentVersion';
+import { DocumentApproval } from '../models/DocumentApproval';
 import { AppError, asyncHandler } from '../middlewares/errorHandler';
 
 export const createDocument = asyncHandler(async (
@@ -8,11 +10,27 @@ export const createDocument = asyncHandler(async (
     res: Response,
     next: NextFunction
 ) => {
-    const { title, type, code, content } = req.body;
+    const {
+        title,
+        type,
+        code,
+        content,
+        category,
+        area,
+        description,
+        tags,
+        confidentialityLevel,
+        requiresApproval,
+        isCritical,
+        appliesToAudits,
+        reviewFrequencyMonths,
+        responsibleUserId
+    } = req.body;
     const tenantId = (req as any).user.tenantId;
     const userId = (req as any).user.userId;
 
     const documentRepo = AppDataSource.getRepository(Document);
+    const versionRepo = AppDataSource.getRepository(DocumentVersion);
 
     // Check if code exists for this tenant
     if (code) {
@@ -20,6 +38,13 @@ export const createDocument = asyncHandler(async (
         if (existing) {
             throw new AppError('A document with this code already exists in your organization', 400);
         }
+    }
+
+    // Calculate next review date if frequency is provided
+    let nextReviewDate = null;
+    if (reviewFrequencyMonths) {
+        nextReviewDate = new Date();
+        nextReviewDate.setMonth(nextReviewDate.getMonth() + reviewFrequencyMonths);
     }
 
     const document = documentRepo.create({
@@ -34,10 +59,34 @@ export const createDocument = asyncHandler(async (
         code,
         content,
         status: 'draft',
-        version: 1
+        version: 1,
+        category,
+        area,
+        description,
+        tags: tags || [],
+        confidentialityLevel: confidentialityLevel || 'internal',
+        requiresApproval: requiresApproval || false,
+        isCritical: isCritical || false,
+        appliesToAudits: appliesToAudits || false,
+        reviewFrequencyMonths,
+        nextReviewDate,
+        responsibleUserId: responsibleUserId || userId,
+        isLatestVersion: true
     });
 
     await documentRepo.save(document);
+
+    // Create initial version
+    const initialVersion = versionRepo.create({
+        documentId: document.id,
+        version: '1.0',
+        content,
+        fileUrl: document.storageKey,
+        changes: 'Initial version',
+        createdById: userId
+    });
+
+    await versionRepo.save(initialVersion);
 
     res.status(201).json({
         status: 'success',
@@ -146,9 +195,12 @@ export const approveDocument = asyncHandler(async (
     next: NextFunction
 ) => {
     const { id } = req.params;
+    const { comments } = req.body;
     const tenantId = (req as any).user.tenantId;
     const userId = (req as any).user.userId;
+
     const documentRepo = AppDataSource.getRepository(Document);
+    const approvalRepo = AppDataSource.getRepository(DocumentApproval);
 
     const document = await documentRepo.findOne({ where: { id, tenantId } });
 
@@ -156,13 +208,71 @@ export const approveDocument = asyncHandler(async (
         throw new AppError('Document not found', 404);
     }
 
+    if (document.status !== 'under_review') {
+        throw new AppError('Document is not under review', 400);
+    }
+
     document.status = 'approved';
     document.approvedById = userId;
     document.approvalDate = new Date();
     await documentRepo.save(document);
 
+    // Create approval record
+    const approval = approvalRepo.create({
+        documentId: id,
+        reviewerId: userId,
+        status: 'approved',
+        comments,
+        reviewedAt: new Date()
+    });
+
+    await approvalRepo.save(approval);
+
     res.json({
         status: 'success',
-        data: { document }
+        data: { document, approval }
+    });
+});
+
+export const rejectDocument = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { id } = req.params;
+    const { comments } = req.body;
+    const tenantId = (req as any).user.tenantId;
+    const userId = (req as any).user.userId;
+
+    const documentRepo = AppDataSource.getRepository(Document);
+    const approvalRepo = AppDataSource.getRepository(DocumentApproval);
+
+    if (!comments) {
+        throw new AppError('Rejection reason is required', 400);
+    }
+
+    const document = await documentRepo.findOne({ where: { id, tenantId } });
+
+    if (!document) {
+        throw new AppError('Document not found', 404);
+    }
+
+    document.status = 'draft';
+    await documentRepo.save(document);
+
+    // Create rejection record
+    const approval = approvalRepo.create({
+        documentId: id,
+        reviewerId: userId,
+        status: 'rejected',
+        comments,
+        reviewedAt: new Date()
+    });
+
+    await approvalRepo.save(approval);
+
+    res.json({
+        status: 'success',
+        data: { document, approval }
     });
 });

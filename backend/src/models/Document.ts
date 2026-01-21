@@ -69,6 +69,47 @@ export class Document {
     @Column({ type: 'timestamp', nullable: true })
     approvalDate: Date;
 
+    // Enhanced fields for document management
+    @Column({ length: 100, nullable: true })
+    category: string; // e.g., "Calidad", "Operaciones", "RRHH"
+
+    @Column({ length: 100, nullable: true })
+    area: string; // Department/Area responsible
+
+    @Column({ nullable: true })
+    responsibleUserId: string;
+
+    @ManyToOne(() => User)
+    @JoinColumn({ name: 'responsibleUserId' })
+    responsibleUser: User;
+
+    @Column({ length: 20, default: 'internal' })
+    confidentialityLevel: 'public' | 'internal' | 'confidential' | 'secret';
+
+    @Column({ type: 'text', nullable: true })
+    description: string;
+
+    @Column({ type: 'simple-array', nullable: true })
+    tags: string[]; // For search and categorization
+
+    @Column({ default: false })
+    requiresApproval: boolean;
+
+    @Column({ default: false })
+    isCritical: boolean; // Critical/mandatory documents
+
+    @Column({ default: false })
+    appliesToAudits: boolean; // Can be included in audits
+
+    @Column({ type: 'timestamp', nullable: true })
+    nextReviewDate: Date;
+
+    @Column({ type: 'int', nullable: true })
+    reviewFrequencyMonths: number; // 3, 6, 12 months
+
+    @Column({ default: true })
+    isLatestVersion: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 
