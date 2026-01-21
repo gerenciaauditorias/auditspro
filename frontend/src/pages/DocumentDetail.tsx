@@ -74,8 +74,10 @@ const DocumentDetail: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'details' | 'versions' | 'permissions'>('details');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [shareEmail, setShareEmail] = useState('');
     const [sharePermission, setSharePermission] = useState<'read' | 'write' | 'approve'>('read');
+    const [pendingInviteEmail, setPendingInviteEmail] = useState('');
 
     useEffect(() => {
         if (id) {
@@ -605,7 +607,15 @@ const DocumentDetail: React.FC = () => {
                                             setShareEmail('');
                                             fetchPermissions();
                                         } catch (error: any) {
-                                            toast.error(error.response?.data?.message || 'Error al compartir');
+                                            // Check if user not found
+                                            if (error.response?.status === 404 && error.response?.data?.message?.includes('User not found')) {
+                                                // Show invitation modal
+                                                setPendingInviteEmail(shareEmail);
+                                                setIsShareModalOpen(false);
+                                                setIsInviteModalOpen(true);
+                                            } else {
+                                                toast.error(error.response?.data?.message || 'Error al compartir');
+                                            }
                                         }
                                     }}
                                     className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
@@ -678,9 +688,84 @@ const DocumentDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Invitation Modal */}
+                {isInviteModalOpen && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                                <h3 className="text-xl font-semibold text-gray-900">Usuario No Encontrado</h3>
+                                <button
+                                    onClick={() => {
+                                        setIsInviteModalOpen(false);
+                                        setPendingInviteEmail('');
+                                    }}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <div className="flex items-start gap-4 mb-4">
+                                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <AlertCircle size={24} className="text-yellow-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-900 font-medium mb-2">
+                                            El usuario <span className="text-primary-600">{pendingInviteEmail}</span> no está registrado en tu organización.
+                                        </p>
+                                        <p className="text-gray-600 text-sm">
+                                            ¿Deseas enviar una invitación para que se una a tu organización?
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-blue-800 text-sm">
+                                        <strong>Nota:</strong> Una vez que el usuario acepte la invitación y se registre,
+                                        podrás compartir documentos con él.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                                <button
+                                    onClick={() => {
+                                        setIsInviteModalOpen(false);
+                                        setPendingInviteEmail('');
+                                        setShareEmail('');
+                                    }}
+                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await apiClient.post('/invitations', {
+                                                email: pendingInviteEmail,
+                                                role: 'user'
+                                            });
+                                            toast.success(`Invitación enviada a ${pendingInviteEmail}`);
+                                            setIsInviteModalOpen(false);
+                                            setPendingInviteEmail('');
+                                            setShareEmail('');
+                                        } catch (error: any) {
+                                            toast.error(error.response?.data?.message || 'Error al enviar invitación');
+                                        }
+                                    }}
+                                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center gap-2"
+                                >
+                                    <Mail size={18} />
+                                    Enviar Invitación
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );
 };
 
+export default DocumentDetail;
 export default DocumentDetail;
