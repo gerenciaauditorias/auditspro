@@ -7,7 +7,8 @@ import {
     updateDocument,
     requestApproval,
     approveDocument,
-    rejectDocument
+    rejectDocument,
+    uploadDocument
 } from '../controllers/documentController';
 import {
     searchDocuments,
@@ -37,6 +38,7 @@ router.get('/matrix', getDocumentMatrix);
 
 // Basic CRUD
 router.get('/', getDocuments);
+router.post('/upload', upload.single('file'), uploadDocument); // Must be before generic /:id Routes
 router.post('/', createDocument);
 router.get('/:id', getDocumentById);
 router.put('/:id', updateDocument);

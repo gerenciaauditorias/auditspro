@@ -276,3 +276,71 @@ export const rejectDocument = asyncHandler(async (
         data: { document, approval }
     });
 });
+
+export const uploadDocument = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.file) {
+        throw new AppError('No file uploaded', 400);
+    }
+
+    const tenantId = (req as any).user.tenantId;
+    const userId = (req as any).user.userId;
+    const file = req.file;
+
+    const documentRepo = AppDataSource.getRepository(Document);
+    const versionRepo = AppDataSource.getRepository(DocumentVersion);
+
+    // Upload to storage
+    // Import storageService dynamically or ensure it's imported at top
+    const { storageService } = require('../services/storageService');
+
+    // Generate safe filename and key
+    const timestamp = Date.now();
+    const safeOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const storageKey = `uploads/${tenantId}/${timestamp}-${safeOriginalName}`;
+
+    await storageService.uploadFile(storageKey, file.buffer, file.mimetype);
+
+    // Create document record
+    const document = documentRepo.create({
+        tenantId,
+        uploadedById: userId,
+        fileName: file.originalname,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        storageKey: storageKey,
+        type: file.mimetype.includes('pdf') ? 'policy' : 'other', // Auto-detect simplistic type
+        status: 'draft',
+        version: 1,
+        content: '', // No text content initially for binary files
+        description: 'Uploaded via quick upload',
+        isLatestVersion: true,
+        category: 'General', // Default
+        area: 'General', // Default
+        confidentialityLevel: 'internal',
+        responsibleUserId: userId
+    });
+
+    await documentRepo.save(document);
+
+    // Create initial version
+    const initialVersion = versionRepo.create({
+        documentId: document.id,
+        version: '1.0',
+        content: '',
+        fileUrl: storageKey,
+        changes: 'Initial upload',
+        createdById: userId
+    });
+
+    await versionRepo.save(initialVersion);
+
+    res.status(201).json({
+        status: 'success',
+        data: { document }
+    });
+});

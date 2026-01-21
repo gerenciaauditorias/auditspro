@@ -1,6 +1,5 @@
 import React from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { DocumentUpload } from '../features/documents/components/DocumentUpload';
 import { FileText, Users, CheckCircle, Clock, MoreVertical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks/useAuth';
@@ -62,9 +61,9 @@ const Dashboard: React.FC = () => {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                     {/* Main List */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-6">
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-gray-900">Auditorías Recientes</h3>
@@ -94,11 +93,6 @@ const Dashboard: React.FC = () => {
                                 ))}
                             </div>
                         </div>
-                    </div>
-
-                    {/* Right Sidebar */}
-                    <div className="space-y-6">
-                        <DocumentUpload />
                     </div>
                 </div>
             </div>
