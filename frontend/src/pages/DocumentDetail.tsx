@@ -14,7 +14,11 @@ import {
     History,
     MessageSquare,
     Share2,
-    Eye
+    Eye,
+    X,
+    Plus,
+    Mail,
+    Shield
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import toast from 'react-hot-toast';
@@ -65,13 +69,19 @@ const DocumentDetail: React.FC = () => {
     const navigate = useNavigate();
     const [document, setDocument] = useState<Document | null>(null);
     const [versions, setVersions] = useState<Version[]>([]);
+    const [permissions, setPermissions] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'details' | 'versions' | 'permissions'>('details');
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [shareEmail, setShareEmail] = useState('');
+    const [sharePermission, setSharePermission] = useState<'read' | 'write' | 'approve'>('read');
 
     useEffect(() => {
         if (id) {
             fetchDocument();
             fetchVersions();
+            fetchPermissions();
         }
     }, [id]);
 
@@ -94,6 +104,17 @@ const DocumentDetail: React.FC = () => {
             const response = await apiClient.get(`/documents/${id}/versions`);
             if (response.data.status === 'success') {
                 setVersions(response.data.data.versions);
+            }
+        } catch (error) {
+            console.error('Error loading versions:', error);
+        }
+    };
+
+    const fetchPermissions = async () => {
+        try {
+            const response = await apiClient.get(`/documents/${id}/permissions`);
+            if (response.data.status === 'success') {
+                setPermissions(response.data.data.permissions);
             }
         } catch (error) {
             console.error('Error loading versions:', error);
@@ -261,8 +282,8 @@ const DocumentDetail: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('details')}
                             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'details'
-                                    ? 'border-primary-600 text-primary-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ? 'border-primary-600 text-primary-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                         >
                             <Eye size={18} className="inline mr-2" />
@@ -271,8 +292,8 @@ const DocumentDetail: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('versions')}
                             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'versions'
-                                    ? 'border-primary-600 text-primary-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ? 'border-primary-600 text-primary-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                         >
                             <History size={18} className="inline mr-2" />
@@ -281,8 +302,8 @@ const DocumentDetail: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('permissions')}
                             className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'permissions'
-                                    ? 'border-primary-600 text-primary-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ? 'border-primary-600 text-primary-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                         >
                             <Users size={18} className="inline mr-2" />
@@ -382,8 +403,64 @@ const DocumentDetail: React.FC = () => {
 
                         {activeTab === 'permissions' && (
                             <div className="bg-white rounded-xl border border-gray-200 p-6">
-                                <h3 className="text-lg font-semibold mb-4">Gestión de Permisos</h3>
-                                <p className="text-gray-500">Funcionalidad de permisos en desarrollo</p>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-semibold">Gestión de Permisos</h3>
+                                    <button
+                                        onClick={() => setIsShareModalOpen(true)}
+                                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+                                    >
+                                        <Plus size={18} />
+                                        Agregar Usuario
+                                    </button>
+                                </div>
+
+                                {permissions.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {permissions.map((perm) => (
+                                            <div key={perm.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                                        <Users size={20} className="text-primary-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{perm.user?.fullName || 'Usuario'}</p>
+                                                        <p className="text-sm text-gray-500">{perm.user?.email}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${perm.permission === 'approve' ? 'bg-purple-100 text-purple-700' :
+                                                        perm.permission === 'write' ? 'bg-blue-100 text-blue-700' :
+                                                            'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                        {perm.permission === 'approve' ? 'Aprobar' : perm.permission === 'write' ? 'Editar' : 'Ver'}
+                                                    </span>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (confirm('¿Revocar este permiso?')) {
+                                                                try {
+                                                                    await apiClient.delete(`/documents/${id}/permissions/${perm.id}`);
+                                                                    toast.success('Permiso revocado');
+                                                                    fetchPermissions();
+                                                                } catch (error) {
+                                                                    toast.error('Error al revocar permiso');
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="text-red-600 hover:text-red-700"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <Shield size={48} className="mx-auto text-gray-300 mb-3" />
+                                        <p className="text-gray-500">No hay permisos específicos asignados</p>
+                                        <p className="text-sm text-gray-400 mt-1">Los permisos se heredan de los roles de usuario</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -428,15 +505,34 @@ const DocumentDetail: React.FC = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <h3 className="text-lg font-semibold mb-4">Acciones Rápidas</h3>
                             <div className="space-y-2">
-                                <button className="w-full px-4 py-2 text-left border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
+                                <button
+                                    onClick={() => setIsShareModalOpen(true)}
+                                    className="w-full px-4 py-2 text-left border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                                >
                                     <Share2 size={18} className="mr-2 text-gray-600" />
                                     Compartir
                                 </button>
-                                <button className="w-full px-4 py-2 text-left border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center">
+                                <button
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="w-full px-4 py-2 text-left border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                                >
                                     <Edit size={18} className="mr-2 text-gray-600" />
                                     Editar
                                 </button>
-                                <button className="w-full px-4 py-2 text-left border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center">
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('¿Estás seguro de eliminar este documento?')) {
+                                            try {
+                                                await apiClient.delete(`/documents/${id}`);
+                                                toast.success('Documento eliminado');
+                                                navigate('/documents');
+                                            } catch (error) {
+                                                toast.error('Error al eliminar');
+                                            }
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2 text-left border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center"
+                                >
                                     <Trash2 size={18} className="mr-2" />
                                     Eliminar
                                 </button>
@@ -444,6 +540,144 @@ const DocumentDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Share Modal */}
+                {isShareModalOpen && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                                <h3 className="text-xl font-semibold text-gray-900">Compartir Documento</h3>
+                                <button
+                                    onClick={() => setIsShareModalOpen(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email del usuario
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={shareEmail}
+                                        onChange={(e) => setShareEmail(e.target.value)}
+                                        placeholder="usuario@ejemplo.com"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Nivel de permiso
+                                    </label>
+                                    <select
+                                        value={sharePermission}
+                                        onChange={(e) => setSharePermission(e.target.value as 'read' | 'write' | 'approve')}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    >
+                                        <option value="read">Solo lectura</option>
+                                        <option value="write">Editar</option>
+                                        <option value="approve">Aprobar</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                                <button
+                                    onClick={() => setIsShareModalOpen(false)}
+                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!shareEmail) {
+                                            toast.error('Ingresa un email');
+                                            return;
+                                        }
+                                        try {
+                                            await apiClient.post(`/documents/${id}/permissions`, {
+                                                email: shareEmail,
+                                                permission: sharePermission
+                                            });
+                                            toast.success('Permiso otorgado');
+                                            setIsShareModalOpen(false);
+                                            setShareEmail('');
+                                            fetchPermissions();
+                                        } catch (error: any) {
+                                            toast.error(error.response?.data?.message || 'Error al compartir');
+                                        }
+                                    }}
+                                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                                >
+                                    Compartir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Modal */}
+                {isEditModalOpen && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+                                <h3 className="text-xl font-semibold text-gray-900">Editar Documento</h3>
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                    <p className="text-blue-800 text-sm">
+                                        <strong>Nota:</strong> La funcionalidad completa de edición con WYSIWYG está en desarrollo.
+                                        Por ahora, puedes actualizar los metadatos del documento desde la API.
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                        <input
+                                            type="text"
+                                            defaultValue={document?.fileName}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            disabled
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
+                                        <input
+                                            type="text"
+                                            defaultValue={document?.code}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            disabled
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                        <textarea
+                                            defaultValue={document?.description}
+                                            rows={3}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            disabled
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                                <button
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );
