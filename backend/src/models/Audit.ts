@@ -5,10 +5,14 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     ManyToOne,
-    JoinColumn
+    JoinColumn,
+    OneToMany,
+    ManyToMany,
+    JoinTable
 } from 'typeorm';
 import { Tenant } from './Tenant';
 import { User } from './User';
+import { AuditChecklist } from './AuditChecklist';
 
 @Entity('audits')
 export class Audit {
@@ -58,6 +62,26 @@ export class Audit {
 
     @Column({ type: 'text', nullable: true })
     conclusions: string;
+
+    @Column({ nullable: true })
+    isoStandard: string;
+
+    @Column({ type: 'timestamp', nullable: true })
+    startDate: Date;
+
+    @Column({ type: 'timestamp', nullable: true })
+    endDate: Date;
+
+    @OneToMany(() => AuditChecklist, checklist => checklist.audit, { cascade: true })
+    checklists: AuditChecklist[];
+
+    @ManyToMany(() => User)
+    @JoinTable({
+        name: 'audit_responsibles',
+        joinColumn: { name: 'auditId', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'userId', referencedColumnName: 'id' }
+    })
+    responsibles: User[];
 
     @CreateDateColumn()
     createdAt: Date;
