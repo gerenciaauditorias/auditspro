@@ -27,9 +27,27 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     minHeight = '300px'
 }) => {
     const [isFocused, setIsFocused] = useState(false);
+    const editorRef = React.useRef<HTMLDivElement>(null);
+
+    // Sync external value changes to editor, but avoid cursor jumps
+    React.useEffect(() => {
+        if (editorRef.current && editorRef.current.innerHTML !== value) {
+            // Only update if content is actually different to avoid cursor reset
+            // Check if the difference is meaningful to prevent loops
+            // For simple cases, just checking inequality is enough if we trust onInput
+            if (document.activeElement !== editorRef.current) {
+                editorRef.current.innerHTML = value;
+            } else {
+                // If focused, we have to be careful. usually we don't update if we are the ones who triggered the change
+            }
+        }
+    }, [value]);
 
     const handleFormat = (command: string, value?: string) => {
         document.execCommand(command, false, value);
+        if (editorRef.current) {
+            onChange(editorRef.current.innerHTML);
+        }
     };
 
     const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
@@ -104,14 +122,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
             {/* Editor */}
             <div
+                ref={editorRef}
                 contentEditable
                 onInput={handleContentChange}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                dangerouslySetInnerHTML={{ __html: value }}
                 className={`p-4 outline-none ${isFocused ? 'ring-2 ring-primary-500' : ''}`}
                 style={{ minHeight }}
                 data-placeholder={placeholder}
+                dangerouslySetInnerHTML={{ __html: value }}
             />
 
             <style>{`
