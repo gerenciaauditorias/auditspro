@@ -21,6 +21,7 @@ import ncRoutes from './ncs';
 import kpiRoutes from './kpis';
 import riskRoutes from './risks';
 import userRoutes from './users';
+import adminRoutes from './admin';
 
 router.use('/auth', authRoutes);
 router.use('/documents', documentRoutes);
@@ -30,5 +31,6 @@ router.use('/ncs', ncRoutes);
 router.use('/kpis', kpiRoutes);
 router.use('/risks', riskRoutes);
 router.use('/users', userRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;

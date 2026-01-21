@@ -1,30 +1,61 @@
 import nodemailer from 'nodemailer';
 
-// Create reusable transporter object using the default SMTP transport
+import { SystemConfig } from '../models/SystemConfig';
+import { AppDataSource } from '../config/database';
+
+// Create reusable transporter object using dynamic configuration
 const createTransporter = async () => {
-    // For development, use Ethereal if no env vars are set
-    if (process.env.NODE_ENV !== 'production' && !process.env.EMAIL_HOST) {
-        const testAccount = await nodemailer.createTestAccount();
+    try {
+        const configRepo = AppDataSource.getRepository(SystemConfig);
+        const configs = await configRepo.find({ where: { category: 'smtp' } });
+
+        const configMap = configs.reduce((acc, curr) => {
+            acc[curr.key] = curr.value;
+            return acc;
+        }, {} as Record<string, string>);
+
+        // Use DB config if available, otherwise fallback to env vars
+        const host = configMap.smtp_host || process.env.EMAIL_HOST;
+        const port = parseInt(configMap.smtp_port || process.env.EMAIL_PORT || '587');
+        const user = configMap.smtp_user || process.env.EMAIL_USER;
+        const pass = configMap.smtp_pass || process.env.EMAIL_PASS;
+        const secure = configMap.smtp_secure === 'true' || process.env.EMAIL_SECURE === 'true';
+
+        if (process.env.NODE_ENV !== 'production' && !host) {
+            const testAccount = await nodemailer.createTestAccount();
+            return nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass,
+                },
+            });
+        }
+
         return nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false,
+            host,
+            port,
+            secure,
             auth: {
-                user: testAccount.user,
-                pass: testAccount.pass,
+                user,
+                pass,
+            },
+        });
+    } catch (error) {
+        console.error('Error creating email transporter:', error);
+        // Fallback to minimal env config or error out
+        return nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT || '587'),
+            secure: process.env.EMAIL_SECURE === 'true',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
             },
         });
     }
-
-    return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT || '587'),
-        secure: process.env.EMAIL_SECURE === 'true',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
 };
 
 export const sendVerificationEmail = async (email: string, userId: string) => {

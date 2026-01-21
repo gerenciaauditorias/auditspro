@@ -29,10 +29,13 @@ const Settings: React.FC = () => {
     }
 
     const tabs = [
-        { id: 'organization' as TabType, label: 'Organización', icon: Building },
-        { id: 'users' as TabType, label: 'Usuarios', icon: Users },
-        { id: 'security' as TabType, label: 'Seguridad', icon: Shield }
+        { id: 'organization' as TabType, label: 'Organización', icon: Building, hidden: !isTenantAdmin },
+        { id: 'users' as TabType, label: 'Usuarios', icon: Users, hidden: !isTenantAdmin },
+        { id: 'security' as TabType, label: 'Seguridad', icon: Shield, hidden: !isTenantAdmin },
+        { id: 'admin' as TabType, label: 'Administración', icon: Globe, hidden: !isSuperAdmin }
     ];
+
+    const visibleTabs = tabs.filter(t => !t.hidden);
 
     return (
         <DashboardLayout>
@@ -43,7 +46,7 @@ const Settings: React.FC = () => {
                 {/* Tabs */}
                 <div className="border-b border-gray-200 mb-6">
                     <nav className="-mb-px flex space-x-8">
-                        {tabs.map((tab) => {
+                        {visibleTabs.map((tab) => {
                             const Icon = tab.icon;
                             return (
                                 <button
@@ -69,6 +72,7 @@ const Settings: React.FC = () => {
                 <div className="mt-6">
                     {activeTab === 'organization' && <OrganizationSettings />}
                     {activeTab === 'users' && <UserManagement />}
+                    {activeTab === 'admin' && <AdminPanel />}
                     {activeTab === 'security' && (
                         <div className="bg-white p-8 border border-gray-200 rounded-xl text-center text-gray-400">
                             Configuración de seguridad en desarrollo...
