@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import {
     FileText,
@@ -10,7 +11,12 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    ArrowUpRight
+    ArrowUpRight,
+    Eye,
+    Edit,
+    Trash2,
+    Share2,
+    Send
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import toast from 'react-hot-toast';
@@ -181,6 +187,26 @@ const Documents: React.FC = () => {
         doc.code?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleViewDocument = (id: string) => {
+        navigate(`/documents/${id}`);
+    };
+
+    const handleDeleteDocument = async (id: string) => {
+        if (!confirm('¿Estás seguro de eliminar este documento?')) return;
+
+        try {
+            await apiClient.delete(`/documents/${id}`);
+            toast.success('Documento eliminado');
+            fetchDocuments();
+        } catch (error) {
+            toast.error('Error al eliminar documento');
+        }
+    };
+
+    const toggleMenu = (id: string) => {
+        setOpenMenuId(openMenuId === id ? null : id);
+    };
+
     return (
         <DashboardLayout>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -255,9 +281,9 @@ const Documents: React.FC = () => {
                                             {doc.code || 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
+                                            <div className="flex items-center cursor-pointer" onClick={() => handleViewDocument(doc.id)}>
                                                 <FileText className="text-primary-600 mr-3" size={20} />
-                                                <span className="text-sm font-medium text-gray-900">{doc.fileName}</span>
+                                                <span className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors">{doc.fileName}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -273,12 +299,86 @@ const Documents: React.FC = () => {
                                             {new Date(doc.updatedAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button className="text-gray-400 hover:text-primary-600 px-2 group">
+                                            <button
+                                                onClick={() => handleViewDocument(doc.id)}
+                                                className="text-gray-400 hover:text-primary-600 px-2 group"
+                                                title="Ver documento"
+                                            >
                                                 <ArrowUpRight size={18} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                                             </button>
-                                            <button className="text-gray-400 hover:text-gray-600 px-2">
-                                                <MoreVertical size={18} />
-                                            </button>
+                                            <div className="relative inline-block">
+                                                <button
+                                                    onClick={() => toggleMenu(doc.id)}
+                                                    className="text-gray-400 hover:text-gray-600 px-2"
+                                                >
+                                                    <MoreVertical size={18} />
+                                                </button>
+                                                {openMenuId === doc.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                                        <div className="py-1">
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleViewDocument(doc.id);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                            >
+                                                                <Eye size={16} className="mr-2" />
+                                                                Ver detalles
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    // TODO: Implement edit
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                            >
+                                                                <Edit size={16} className="mr-2" />
+                                                                Editar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    // TODO: Implement share
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                            >
+                                                                <Share2 size={16} className="mr-2" />
+                                                                Compartir
+                                                            </button>
+                                                            {doc.status === 'draft' && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await apiClient.post(`/documents/${doc.id}/request-approval`);
+                                                                            toast.success('Enviado para aprobación');
+                                                                            fetchDocuments();
+                                                                        } catch (error) {
+                                                                            toast.error('Error al enviar');
+                                                                        }
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                                >
+                                                                    <Send size={16} className="mr-2" />
+                                                                    Enviar para aprobación
+                                                                </button>
+                                                            )}
+                                                            <hr className="my-1" />
+                                                            <button
+                                                                onClick={() => {
+                                                                    handleDeleteDocument(doc.id);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center"
+                                                            >
+                                                                <Trash2 size={16} className="mr-2" />
+                                                                Eliminar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

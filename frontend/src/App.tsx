@@ -3,6 +3,7 @@ import { AuthProvider } from './features/auth/hooks/useAuth';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
+import DocumentDetail from './pages/DocumentDetail';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Logout from './pages/Logout';
@@ -91,6 +92,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Documents />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/documents/:id"
+                        element={
+                            <ProtectedRoute>
+                                <DocumentDetail />
                             </ProtectedRoute>
                         }
                     />
