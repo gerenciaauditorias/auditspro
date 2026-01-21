@@ -84,6 +84,64 @@ export const updateSystemConfig = asyncHandler(async (
     });
 });
 
+export const testSMTP = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { email } = req.body;
+
+    if (!email) {
+        throw new AppError('Email is required', 400);
+    }
+
+    // Dynamic import to avoid circular dependencies if any, but locally we can import
+    const { sendInvitationEmail } = require('../services/emailService');
+
+    try {
+        // Send a test email (reusing invitation layout or generic)
+        // Ideally we would have a sendTestEmail function, but let's try to verify via a simple transporter verify or sending a real mail
+        const nodemailer = require('nodemailer');
+        const { SystemConfig } = require('../models/SystemConfig');
+        const configRepo = AppDataSource.getRepository(SystemConfig);
+        const configs = await configRepo.find({ where: { category: 'smtp' } });
+
+        const configMap = configs.reduce((acc: any, curr: any) => {
+            acc[curr.key] = curr.value;
+            return acc;
+        }, {} as Record<string, string>);
+
+        const transporter = nodemailer.createTransport({
+            host: configMap.smtp_host || process.env.EMAIL_HOST,
+            port: parseInt(configMap.smtp_port || process.env.EMAIL_PORT || '587'),
+            secure: configMap.smtp_secure === 'true' || process.env.EMAIL_SECURE === 'true',
+            auth: {
+                user: configMap.smtp_user || process.env.EMAIL_USER,
+                pass: configMap.smtp_pass || process.env.EMAIL_PASS,
+            },
+        });
+
+        await transporter.verify();
+        await transporter.sendMail({
+            from: configMap.smtp_from || '"Test" <noreply@auditoriasenlinea.com.ar>',
+            to: email,
+            subject: 'Test SMTP Configuration - Auditorías en Línea',
+            text: 'This is a test email to verify your SMTP configuration is working correctly.'
+        });
+
+        res.json({
+            status: 'success',
+            message: 'SMTP connection successful and test email sent'
+        });
+    } catch (error: any) {
+        console.error('SMTP Test Error:', error);
+        res.status(500).json({
+            status: 'error',
+            message: `SMTP Validation Failed: ${error.message}`
+        });
+    }
+});
+
 export const deleteTenant = asyncHandler(async (
     req: Request,
     res: Response,

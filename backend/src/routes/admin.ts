@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllTenants, getSystemConfig, updateSystemConfig, deleteTenant } from '../controllers/adminController';
+import { getAllTenants, getSystemConfig, updateSystemConfig, deleteTenant, testSMTP } from '../controllers/adminController';
 import { authenticate } from '../middlewares/auth';
 import { requireRole } from '../middlewares/rbac';
 
@@ -16,5 +16,6 @@ router.delete('/tenants/:id', deleteTenant);
 // System Configuration
 router.get('/config', getSystemConfig);
 router.patch('/config', updateSystemConfig);
+router.post('/config/test-smtp', testSMTP as any);
 
 export default router;

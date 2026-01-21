@@ -7,6 +7,12 @@ import {
     OneToMany
 } from 'typeorm';
 import { User } from './User';
+import { Audit } from './Audit';
+import { Document } from './Document';
+import { NonConformity } from './NonConformity';
+import { KPI } from './KPI';
+import { Risk } from './Risk';
+import { Category } from './Category';
 
 @Entity('tenants')
 export class Tenant {
@@ -59,8 +65,26 @@ export class Tenant {
     @Column({ length: 50, nullable: true })
     ivaCondition?: 'responsable_inscripto' | 'exento' | 'no_responsable';
 
-    @OneToMany(() => User, user => user.tenant)
+    @OneToMany(() => User, user => user.tenant, { cascade: true, onDelete: 'CASCADE' })
     users: User[];
+
+    @OneToMany(() => Audit, audit => audit.tenant, { cascade: true, onDelete: 'CASCADE' })
+    audits: Audit[];
+
+    @OneToMany(() => Document, document => document.tenant, { cascade: true, onDelete: 'CASCADE' })
+    documents: Document[];
+
+    @OneToMany(() => NonConformity, nc => nc.tenant, { cascade: true, onDelete: 'CASCADE' })
+    ncs: NonConformity[];
+
+    @OneToMany(() => KPI, kpi => kpi.tenant, { cascade: true, onDelete: 'CASCADE' })
+    kpis: KPI[];
+
+    @OneToMany(() => Risk, risk => risk.tenant, { cascade: true, onDelete: 'CASCADE' })
+    risks: Risk[];
+
+    @OneToMany(() => Category, category => category.tenant, { cascade: true, onDelete: 'CASCADE' })
+    categories: Category[];
 
     @CreateDateColumn()
     createdAt: Date;

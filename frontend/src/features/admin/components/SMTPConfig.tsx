@@ -169,7 +169,27 @@ export const SMTPConfig: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-between pt-4 border-t border-gray-100">
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                const email = prompt('Ingresa un email para enviar la prueba:');
+                                if (!email) return;
+                                const toastId = toast.loading('Probando conexión...');
+                                try {
+                                    await apiClient.post('/admin/config/test-smtp', { email });
+                                    toast.success('¡Conexión exitosa! Correo enviado.', { id: toastId });
+                                } catch (error: any) {
+                                    console.error(error);
+                                    toast.error(`Error: ${error.response?.data?.message || 'Falló la conexión'}`, { id: toastId });
+                                }
+                            }}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium flex items-center"
+                        >
+                            <CheckCircle className="mr-2" size={18} />
+                            Probar Conexión
+                        </button>
+
                         <button
                             type="submit"
                             disabled={saving}
