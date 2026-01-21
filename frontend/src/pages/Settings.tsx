@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Building, Users, Shield, Loader2 } from 'lucide-react';
+import { Building, Users, Shield, Loader2, Globe } from 'lucide-react';
 import { OrganizationSettings } from '../features/settings/components/OrganizationSettings';
 import { UserManagement } from '../features/settings/components/UserManagement';
+import { AdminPanel } from '../features/admin/components/AdminPanel';
 import { useAuth } from '../features/auth/hooks/useAuth';
 
 import { usePermissions } from '../hooks/usePermissions';
