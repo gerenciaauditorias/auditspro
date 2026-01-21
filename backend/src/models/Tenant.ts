@@ -12,7 +12,7 @@ import { Document } from './Document';
 import { NonConformity } from './NonConformity';
 import { KPI } from './KPI';
 import { Risk } from './Risk';
-import { Category } from './Category';
+
 
 @Entity('tenants')
 export class Tenant {
@@ -100,8 +100,8 @@ export class Tenant {
     @OneToMany(() => Risk, risk => risk.tenant, { cascade: true, onDelete: 'CASCADE' })
     risks: Risk[];
 
-    @OneToMany(() => Category, category => category.tenant, { cascade: true, onDelete: 'CASCADE' })
-    categories: Category[];
+    @OneToMany(() => Risk, risk => risk.tenant, { cascade: true, onDelete: 'CASCADE' })
+    risks: Risk[];
 
     @CreateDateColumn()
     createdAt: Date;
