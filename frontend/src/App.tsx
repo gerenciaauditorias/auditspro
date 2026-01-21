@@ -9,6 +9,7 @@ import Logout from './pages/Logout';
 import Register from './pages/Register';
 import OnboardingWizard from './pages/OnboardingWizard';
 import Audits from './pages/Audits';
+import { AuditDetails } from './pages/AuditDetails';
 import NonConformities from './pages/NonConformities';
 import KPIs from './pages/KPIs';
 import Risks from './pages/Risks';
@@ -60,6 +61,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Audits />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/audits/:id"
+                        element={
+                            <ProtectedRoute>
+                                <AuditDetails />
                             </ProtectedRoute>
                         }
                     />

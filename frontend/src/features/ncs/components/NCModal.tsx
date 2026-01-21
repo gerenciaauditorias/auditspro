@@ -7,10 +7,14 @@ import toast from 'react-hot-toast';
 interface NCModalProps {
     onSuccess: () => void;
     trigger?: React.ReactNode;
+    isOpen?: boolean;
+    onClose?: () => void;
+    auditId?: string;
+    defaultDescription?: string;
 }
 
-export const NCModal: React.FC<NCModalProps> = ({ onSuccess, trigger }) => {
-    const [open, setOpen] = useState(false);
+export const NCModal: React.FC<NCModalProps> = ({ onSuccess, trigger, isOpen, onClose, auditId, defaultDescription }) => {
+    const [internalOpen, setInternalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
@@ -20,11 +24,31 @@ export const NCModal: React.FC<NCModalProps> = ({ onSuccess, trigger }) => {
         dueDate: ''
     });
 
+    const isControlled = isOpen !== undefined;
+    const open = isControlled ? isOpen : internalOpen;
+    const setOpen = isControlled ? (val: boolean) => !val && onClose && onClose() : setInternalOpen;
+
+    // Reset/Init form when opening
+    React.useEffect(() => {
+        if (open) {
+            setFormData(prev => ({
+                ...prev,
+                description: defaultDescription || '',
+                source: auditId ? 'audit' : 'process',
+                title: ''
+            }));
+        }
+    }, [open, defaultDescription, auditId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await apiClient.post('/ncs', formData);
+            const dataToSend = {
+                ...formData,
+                auditId: auditId || undefined
+            };
+            const response = await apiClient.post('/ncs', dataToSend);
             if (response.data.status === 'success') {
                 toast.success('No Conformidad registrada con éxito');
                 setOpen(false);

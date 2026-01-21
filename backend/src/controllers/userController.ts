@@ -11,7 +11,10 @@ export const getUsers = asyncHandler(async (
     const tenantId = (req as any).user.tenantId;
     const userRepo = AppDataSource.getRepository(User);
 
-    select: ['id', 'email', 'name', 'role', 'isActive']
+    const users = await userRepo.find({
+        where: { tenantId },
+        select: ['id', 'email', 'fullName', 'role', 'isActive']
+    });
 
     res.json({
         status: 'success',
