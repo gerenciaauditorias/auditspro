@@ -1,6 +1,6 @@
 import React from 'react';
-import { TenantList } from '../features/admin/components/TenantList';
-import { SMTPConfig } from '../features/admin/components/SMTPConfig';
+import { TenantList } from './TenantList';
+import { SMTPConfig } from './SMTPConfig';
 import { Building, Globe, Server } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
