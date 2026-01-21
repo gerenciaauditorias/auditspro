@@ -133,8 +133,14 @@ export const updateAuditStatus = asyncHandler(async (
     }
 
     audit.status = status;
+
+    if (status === 'in_progress' && !audit.startDate) {
+        audit.startDate = new Date();
+    }
+
     if (status === 'completed') {
-        audit.actualDate = new Date();
+        audit.endDate = new Date();
+        audit.actualDate = new Date(); // Legacy support
     }
 
     await auditRepo.save(audit);

@@ -33,7 +33,8 @@ export class Audit {
     type: 'internal' | 'external' | 'supplier';
 
     @Column({ length: 50, default: 'scheduled' })
-    status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    @Column({ length: 50, default: 'scheduled' })
+    status: 'scheduled' | 'in_progress' | 'paused' | 'completed' | 'cancelled';
 
     @Column({ type: 'timestamp' })
     plannedDate: Date;
