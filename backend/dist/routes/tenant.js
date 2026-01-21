@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const tenantController_1 = require("../controllers/tenantController");
+const auth_1 = require("../middlewares/auth");
+const rbac_1 = require("../middlewares/rbac");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticate);
+router.use(auth_1.ensureTenantIsolation);
+router.get('/', tenantController_1.getTenantInfo);
+router.patch('/', rbac_1.requireTenantAdmin, tenantController_1.updateTenant);
+router.post('/onboarding', rbac_1.requireTenantAdmin, tenantController_1.completeOnboarding);
+exports.default = router;

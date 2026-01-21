@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const ncController_1 = require("../controllers/ncController");
+const auth_1 = require("../middlewares/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticate);
+router.use(auth_1.ensureTenantIsolation);
+router.get('/', ncController_1.getNCs);
+router.post('/', ncController_1.createNC);
+router.patch('/:id', ncController_1.updateNC);
+exports.default = router;

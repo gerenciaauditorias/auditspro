@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auditController_1 = require("../controllers/auditController");
+const auth_1 = require("../middlewares/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticate);
+router.use(auth_1.ensureTenantIsolation);
+router.get('/', auditController_1.getAudits);
+router.post('/', auditController_1.createAudit);
+router.get('/:id', auditController_1.getAuditById);
+router.patch('/:id/status', auditController_1.updateAuditStatus);
+router.patch('/:auditId/checklist/:checklistId', auditController_1.updateChecklistItem);
+exports.default = router;

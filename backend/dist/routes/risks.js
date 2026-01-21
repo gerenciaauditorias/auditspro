@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const riskController_1 = require("../controllers/riskController");
+const auth_1 = require("../middlewares/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticate);
+router.use(auth_1.ensureTenantIsolation);
+router.get('/', riskController_1.getRisks);
+router.post('/', riskController_1.createRisk);
+exports.default = router;

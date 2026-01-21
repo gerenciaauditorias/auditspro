@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const kpiController_1 = require("../controllers/kpiController");
+const auth_1 = require("../middlewares/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticate);
+router.use(auth_1.ensureTenantIsolation);
+router.get('/', kpiController_1.getKPIs);
+router.post('/', kpiController_1.createKPI);
+router.post('/:id/measurements', kpiController_1.addMeasurement);
+exports.default = router;
