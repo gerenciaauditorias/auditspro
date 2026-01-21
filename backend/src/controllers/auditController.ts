@@ -150,3 +150,40 @@ export const updateAuditStatus = asyncHandler(async (
         data: { audit }
     });
 });
+
+export const updateChecklistItem = asyncHandler(async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const { auditId, checklistId } = req.params;
+    const { status, auditorNotes, evidence } = req.body;
+    const tenantId = (req as any).user.tenantId;
+
+    const checklistRepo = AppDataSource.getRepository(AuditChecklist);
+
+    const item = await checklistRepo.findOne({
+        where: { id: checklistId },
+        relations: ['audit']
+    });
+
+    if (!item) {
+        throw new AppError('Checklist item not found', 404);
+    }
+
+    if (item.audit.tenantId !== tenantId) {
+        throw new AppError('Not authorized', 403);
+    }
+
+    // Update fields if provided
+    if (status !== undefined) item.status = status;
+    if (auditorNotes !== undefined) item.auditorNotes = auditorNotes;
+    if (evidence !== undefined) item.evidence = evidence;
+
+    await checklistRepo.save(item);
+
+    res.json({
+        status: 'success',
+        data: { item }
+    });
+});

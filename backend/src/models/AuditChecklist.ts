@@ -19,11 +19,23 @@ export class AuditChecklist {
     @Column('text')
     question: string;
 
-    @Column({ nullable: true })
-    isCompliant: boolean;
+    @Column({
+        type: 'varchar',
+        length: 50,
+        nullable: true
+    })
+    status: 'compliant' | 'non_compliant' | 'observation' | 'improvement_opportunity' | null;
 
     @Column('text', { nullable: true })
     auditorNotes: string;
+
+    @Column('jsonb', { nullable: true })
+    evidence: Array<{
+        type: 'image' | 'document' | 'audio';
+        url: string;
+        name: string;
+        uploadedAt: string;
+    }>;
 
     @CreateDateColumn()
     createdAt: Date;

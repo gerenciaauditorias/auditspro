@@ -3,7 +3,8 @@ import {
     createAudit,
     getAudits,
     getAuditById,
-    updateAuditStatus
+    updateAuditStatus,
+    updateChecklistItem
 } from '../controllers/auditController';
 import { authenticate, ensureTenantIsolation } from '../middlewares/auth';
 
@@ -16,5 +17,6 @@ router.get('/', getAudits);
 router.post('/', createAudit);
 router.get('/:id', getAuditById);
 router.patch('/:id/status', updateAuditStatus);
+router.patch('/:auditId/checklist/:checklistId', updateChecklistItem);
 
 export default router;
