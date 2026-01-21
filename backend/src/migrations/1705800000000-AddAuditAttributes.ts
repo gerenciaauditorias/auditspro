@@ -12,7 +12,7 @@ export class AddAuditAttributes1705800000000 implements MigrationInterface {
 
         // Create audit_checklists table
         await queryRunner.query(`CREATE TABLE IF NOT EXISTS "audit_checklists" (
-            "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+            "id" uuid NOT NULL DEFAULT gen_random_uuid(),
             "auditId" uuid NOT NULL,
             "section" character varying NOT NULL,
             "question" text NOT NULL,
