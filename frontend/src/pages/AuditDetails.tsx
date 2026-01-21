@@ -47,7 +47,7 @@ export const AuditDetails = () => {
         );
     }
 
-    const completedChecks = audit.checklists?.filter((c: any) => c.isCompliant !== null).length || 0;
+    const completedChecks = audit.checklists?.filter((c: any) => c.status !== null).length || 0;
     const totalChecks = audit.checklists?.length || 0;
     const progress = totalChecks > 0 ? (completedChecks / totalChecks) * 100 : 0;
 
@@ -166,6 +166,13 @@ export const AuditDetails = () => {
                     auditId={audit.id}
                     checklists={audit.checklists || []}
                     onUpdate={fetchAudit}
+                    audit={audit}
+                    onFinalize={async () => {
+                        if (confirm('¿Finalizar auditoría? No podrás modificarla después.')) {
+                            await apiClient.patch(`/audits/${audit.id}/status`, { status: 'completed' });
+                            fetchAudit();
+                        }
+                    }}
                 />
             </div>
         </Layout>

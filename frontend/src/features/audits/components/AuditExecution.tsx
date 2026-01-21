@@ -22,9 +22,11 @@ interface AuditExecutionProps {
     auditId: string;
     checklists: ChecklistItem[];
     onUpdate: () => void;
+    audit?: any;
+    onFinalize?: () => void;
 }
 
-export const AuditExecution: React.FC<AuditExecutionProps> = ({ auditId, checklists, onUpdate }) => {
+export const AuditExecution: React.FC<AuditExecutionProps> = ({ auditId, checklists, onUpdate, audit, onFinalize }) => {
     const [savingId, setSavingId] = useState<string | null>(null);
     const [ncModalOpen, setNcModalOpen] = useState(false);
     const [selectedChecklistForNC, setSelectedChecklistForNC] = useState<ChecklistItem | null>(null);
@@ -199,6 +201,27 @@ export const AuditExecution: React.FC<AuditExecutionProps> = ({ auditId, checkli
                     auditId={auditId}
                     defaultDescription={`NC detectada en punto ${selectedChecklistForNC.section}: ${selectedChecklistForNC.question}`}
                 />
+            )}
+
+            {/* Finalizar Button at Bottom */}
+            {audit && audit.status === 'in_progress' && onFinalize && (
+                <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className="text-lg font-semibold text-gray-900">¿Completaste la auditoría?</h4>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Finaliza la auditoría para generar el informe final. No podrás modificarla después.
+                            </p>
+                        </div>
+                        <button
+                            onClick={onFinalize}
+                            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center shadow-sm whitespace-nowrap ml-4"
+                        >
+                            <CheckCircle size={20} className="mr-2" />
+                            Finalizar Auditoría
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );
