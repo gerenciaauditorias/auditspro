@@ -1,23 +1,22 @@
 -- Create super admin user for multi-tenant management
 -- Email: sysadmin@auditoriasenlinea.com.ar
--- Password: syst2m1dm3n (will be hashed)
+-- Password: syst2m1dm3n
 
--- First, create a special tenant for system administration (if not exists)
+-- First, create a special tenant for system administration
 INSERT INTO tenants (id, "companyName", subdomain, "planType", status, "onboardingCompleted")
 VALUES (
-    'system-tenant-00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000001',
     'System Administration',
     'system',
     'enterprise',
     'active',
     true
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (subdomain) DO UPDATE SET
+    "companyName" = EXCLUDED."companyName",
+    status = 'active';
 
--- Create super admin user
--- Password hash for 'syst2m1dm3n' using bcrypt (10 rounds)
--- You'll need to generate this hash using bcrypt
--- For now, this is a placeholder - the actual hash should be generated
+-- Create super admin user with bcrypt hashed password
 INSERT INTO users (
     id,
     "tenantId",
@@ -29,10 +28,10 @@ INSERT INTO users (
     "emailVerified"
 )
 VALUES (
-    'superadmin-0000-0000-0000-000000000001',
-    'system-tenant-00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000001',
     'sysadmin@auditoriasenlinea.com.ar',
-    '$2b$10$YourHashHere', -- This needs to be replaced with actual bcrypt hash
+    '$2b$10$XvRvdtoxh4K1fFDxeXKET.aErY90xrIhRr8QPJxwLT9k9.AY5XUSa',
     'System Administrator',
     'super_admin',
     true,
@@ -41,8 +40,10 @@ VALUES (
 ON CONFLICT (email) DO UPDATE SET
     "passwordHash" = EXCLUDED."passwordHash",
     role = 'super_admin',
-    "isActive" = true;
+    "isActive" = true,
+    "emailVerified" = true;
 
--- Note: To generate the password hash, run this in Node.js:
--- const bcrypt = require('bcrypt');
--- bcrypt.hash('syst2m1dm3n', 10).then(hash => console.log(hash));
+-- Verify creation
+SELECT id, email, "fullName", role, "isActive" 
+FROM users 
+WHERE email = 'sysadmin@auditoriasenlinea.com.ar';
