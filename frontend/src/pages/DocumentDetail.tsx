@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import toast from 'react-hot-toast';
+import { RichTextEditor } from '../components/RichTextEditor';
 
 interface Document {
     id: string;
@@ -78,6 +79,13 @@ const DocumentDetail: React.FC = () => {
     const [shareEmail, setShareEmail] = useState('');
     const [sharePermission, setSharePermission] = useState<'read' | 'write' | 'approve'>('read');
     const [pendingInviteEmail, setPendingInviteEmail] = useState('');
+
+    // Edit states
+    const [editContent, setEditContent] = useState('');
+    const [editDescription, setEditDescription] = useState('');
+    const [editFileName, setEditFileName] = useState('');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -142,6 +150,46 @@ const DocumentDetail: React.FC = () => {
             fetchDocument();
         } catch (error) {
             toast.error('Error al aprobar documento');
+        }
+    };
+
+    const handleOpenEditModal = () => {
+        setEditContent(document?.content || '');
+        setEditDescription(document?.description || '');
+        setEditFileName(document?.fileName || '');
+        setHasUnsavedChanges(false);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        if (hasUnsavedChanges) {
+            if (confirm('¿Descartar cambios sin guardar?')) {
+                setIsEditModalOpen(false);
+                setHasUnsavedChanges(false);
+            }
+        } else {
+            setIsEditModalOpen(false);
+        }
+    };
+
+    const handleSaveDocument = async () => {
+        setIsSaving(true);
+        try {
+            await apiClient.put(`/documents/${id}`, {
+                fileName: editFileName,
+                description: editDescription,
+                content: editContent,
+                changes: 'Documento editado desde la plataforma'
+            });
+
+            toast.success('Documento actualizado correctamente');
+            setIsEditModalOpen(false);
+            setHasUnsavedChanges(false);
+            fetchDocument();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Error al guardar');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -630,60 +678,107 @@ const DocumentDetail: React.FC = () => {
                 {/* Edit Modal */}
                 {isEditModalOpen && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white rounded-t-xl z-10">
                                 <h3 className="text-xl font-semibold text-gray-900">Editar Documento</h3>
                                 <button
-                                    onClick={() => setIsEditModalOpen(false)}
+                                    onClick={handleCloseEditModal}
                                     className="text-gray-400 hover:text-gray-600"
                                 >
                                     <X size={24} />
                                 </button>
                             </div>
-                            <div className="p-6">
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                                    <p className="text-blue-800 text-sm">
-                                        <strong>Nota:</strong> La funcionalidad completa de edición con WYSIWYG está en desarrollo.
-                                        Por ahora, puedes actualizar los metadatos del documento desde la API.
-                                    </p>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                                        <input
-                                            type="text"
-                                            defaultValue={document?.fileName}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                                            disabled
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
-                                        <input
-                                            type="text"
-                                            defaultValue={document?.code}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                                            disabled
-                                        />
+                            <div className="p-6 overflow-y-auto flex-1">
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                            <input
+                                                type="text"
+                                                value={editFileName}
+                                                onChange={(e) => {
+                                                    setEditFileName(e.target.value);
+                                                    setHasUnsavedChanges(true);
+                                                }}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
+                                            <input
+                                                type="text"
+                                                defaultValue={document?.code}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                                                disabled
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                                         <textarea
-                                            defaultValue={document?.description}
-                                            rows={3}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                                            disabled
+                                            value={editDescription}
+                                            onChange={(e) => {
+                                                setEditDescription(e.target.value);
+                                                setHasUnsavedChanges(true);
+                                            }}
+                                            rows={2}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Contenido</label>
+                                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                                            <RichTextEditor
+                                                value={editContent}
+                                                onChange={(value) => {
+                                                    setEditContent(value);
+                                                    setHasUnsavedChanges(true);
+                                                }}
+                                                placeholder="Escribe el contenido del documento aquí..."
+                                                minHeight="400px"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                                <button
-                                    onClick={() => setIsEditModalOpen(false)}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
-                                >
-                                    Cerrar
-                                </button>
+                            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center rounded-b-xl">
+                                <div className="text-sm text-amber-600 font-medium flex items-center">
+                                    {hasUnsavedChanges && (
+                                        <>
+                                            <span className="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
+                                            Cambios sin guardar
+                                        </>
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleCloseEditModal}
+                                        className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                                        disabled={isSaving}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleSaveDocument}
+                                        disabled={isSaving || !hasUnsavedChanges}
+                                        className={`px-6 py-2 rounded-lg font-medium text-white transition-colors flex items-center gap-2 ${isSaving || !hasUnsavedChanges
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-primary-600 hover:bg-primary-700'
+                                            }`}
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                                Guardando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 size={18} />
+                                                Guardar Cambios
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
