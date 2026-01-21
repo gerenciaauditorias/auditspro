@@ -86,61 +86,63 @@ export const AuditDetails = () => {
                                 ${audit.status === 'completed' ? 'bg-green-100 text-green-800' :
                                     audit.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                                         'bg-gray-100 text-gray-800'}`}>
-                                <div className="flex space-x-2 ml-4">
-                                    {audit.status === 'scheduled' && (
-                                        <button
-                                            onClick={async () => {
-                                                await apiClient.patch(`/audits/${audit.id}/status`, { status: 'in_progress' });
-                                                fetchAudit();
-                                            }}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center shadow-sm"
-                                        >
-                                            <Play size={16} className="mr-2" /> Iniciar
-                                        </button>
-                                    )}
-                                    {audit.status === 'in_progress' && (
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={async () => {
-                                                    await apiClient.patch(`/audits/${audit.id}/status`, { status: 'paused' });
-                                                    fetchAudit();
-                                                }}
-                                                className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-medium flex items-center shadow-sm"
-                                            >
-                                                <Pause size={16} className="mr-2" /> Pausar
-                                            </button>
-                                            <button
-                                                onClick={async () => {
-                                                    if (confirm('¿Finalizar auditoría? No podrás modificarla después.')) {
-                                                        await apiClient.patch(`/audits/${audit.id}/status`, { status: 'completed' });
-                                                        fetchAudit();
-                                                    }
-                                                }}
-                                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center shadow-sm"
-                                            >
-                                                <CheckSquare size={16} className="mr-2" /> Finalizar
-                                            </button>
-                                        </div>
-                                    )}
-                                    {audit.status === 'paused' && (
-                                        <button
-                                            onClick={async () => {
-                                                await apiClient.patch(`/audits/${audit.id}/status`, { status: 'in_progress' });
-                                                fetchAudit();
-                                            }}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center shadow-sm"
-                                        >
-                                            <Play size={16} className="mr-2" /> Reanudar
-                                        </button>
-                                    )}
+                                {audit.status.replace('_', ' ')}
+                            </span>
+                            <div className="flex space-x-2 ml-4">
+                                {audit.status === 'scheduled' && (
                                     <button
-                                        onClick={() => generateAuditReport(audit)}
-                                        className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium flex items-center shadow-sm"
+                                        onClick={async () => {
+                                            await apiClient.patch(`/audits/${audit.id}/status`, { status: 'in_progress' });
+                                            fetchAudit();
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center shadow-sm"
                                     >
-                                        <Download size={16} className="mr-2" />
-                                        Exportar PDF
+                                        <Play size={16} className="mr-2" /> Iniciar
                                     </button>
-                                </div>
+                                )}
+                                {audit.status === 'in_progress' && (
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={async () => {
+                                                await apiClient.patch(`/audits/${audit.id}/status`, { status: 'paused' });
+                                                fetchAudit();
+                                            }}
+                                            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-medium flex items-center shadow-sm"
+                                        >
+                                            <Pause size={16} className="mr-2" /> Pausar
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('¿Finalizar auditoría? No podrás modificarla después.')) {
+                                                    await apiClient.patch(`/audits/${audit.id}/status`, { status: 'completed' });
+                                                    fetchAudit();
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center shadow-sm"
+                                        >
+                                            <CheckSquare size={16} className="mr-2" /> Finalizar
+                                        </button>
+                                    </div>
+                                )}
+                                {audit.status === 'paused' && (
+                                    <button
+                                        onClick={async () => {
+                                            await apiClient.patch(`/audits/${audit.id}/status`, { status: 'in_progress' });
+                                            fetchAudit();
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center shadow-sm"
+                                    >
+                                        <Play size={16} className="mr-2" /> Reanudar
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => generateAuditReport(audit)}
+                                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium flex items-center shadow-sm"
+                                >
+                                    <Download size={16} className="mr-2" />
+                                    Exportar PDF
+                                </button>
+                            </div>
                         </div>
 
                         {/* Progress Bar */}
